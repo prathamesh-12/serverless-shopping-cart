@@ -5,6 +5,7 @@ import { ShoppingCartDatabase } from './database';
 import { ShoppingCartMicroservices } from './microservices';
 import { ShoppingCartEventBus } from './eventBus';
 import { ShoppingCartSNS } from './sns';
+import { ServerlessSQS } from './sqs';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class ServerlessShoppingCartStack extends cdk.Stack {
@@ -27,10 +28,13 @@ export class ServerlessShoppingCartStack extends cdk.Stack {
       checkoutService: microservice.checkoutMicroservice
     })
 
+    const queues = new ServerlessSQS(this, 'ServerlessQueue', {
+      checkoutFunction: microservice.checkoutMicroservice
+    })
     //Event Bus / Event Bridge integration
     const eventBus = new ShoppingCartEventBus(this, 'ShoppingCartEventBus', {
       publisherFuntion: microservice.cartsMicroservice,
-      targetFunction: microservice.checkoutMicroservice
+      targetQueue: queues.checkoutQueue
     })
     
 
@@ -38,5 +42,6 @@ export class ServerlessShoppingCartStack extends cdk.Stack {
       ackPublisherFunction: microservice.checkoutMicroservice,
       ackTargetFunction: microservice.cartsMicroservice
     })
+
   }
 }

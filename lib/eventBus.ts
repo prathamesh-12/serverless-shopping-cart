@@ -1,13 +1,14 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
-import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
+import { LambdaFunction, SqsQueue } from "aws-cdk-lib/aws-events-targets";
 import { Function, IFunction } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import { IQueue, Queue } from "aws-cdk-lib/aws-sqs";
 import { Construct } from "constructs";
 
 export interface EventBusProps {
-    publisherFuntion: Function,
-    targetFunction: Function
+    publisherFuntion: Function
+    targetQueue: IQueue
 }
 
 export class ShoppingCartEventBus extends Construct {
@@ -43,9 +44,11 @@ export class ShoppingCartEventBus extends Construct {
             ruleName: 'CheckoutAckRule'
         })
         // add target micro-service to rule
-        cartCheckoutRule.addTarget(new LambdaFunction(props.targetFunction!));
+        //cartCheckoutRule.addTarget(new LambdaFunction(props.targetFunction!));
         //checkoutAckRule.addTarget(new LambdaFunction(props.targetFunction));
 
+        // add target as checkout queue
+        cartCheckoutRule.addTarget(new SqsQueue(props.targetQueue));
         // grant required permissions to event Bus
         eventBus.grantPutEventsTo(props.publisherFuntion!);
     }
