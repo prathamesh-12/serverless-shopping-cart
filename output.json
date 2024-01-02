@@ -1,0 +1,6 @@
+{
+  "ServerlessShoppingCartStack": {
+    "ProductAPI": "https://2okom8plg2.execute-api.ap-south-1.amazonaws.com/prod/",
+    "ProductLambdaRestAPIEndpoint4FCE0A96": "https://2okom8plg2.execute-api.ap-south-1.amazonaws.com/prod/"
+  }
+}
