@@ -1,5 +1,5 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { GetItemCommand, PutItemCommand, QueryCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
+import { APIGatewayProxyEvent, APIGatewayProxyResult, SQSEvent } from 'aws-lambda';
+import { PutItemCommand, QueryCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { ddbClient } from './ddbClient';
 import { CheckoutAckPayload } from './Checkout';
@@ -7,18 +7,45 @@ import { ebClient } from './ebClient';
 import { PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
-export async function handler(event: any) {
+export async function handler(event: any): Promise<APIGatewayProxyResult> {
 
     console.log(`INSIDE CHECKOUT SERVICE - ${JSON.stringify(event)}`);
-
-    const eventType = event['detail-type'];
-    if(eventType !== undefined) {
-        // async invokation
-       return await asyncEventInvocation(event);
-    } else {
-        // sync invokation using API Gateways
-        return await syncApiGatwayInvocation(event);
+    let resp;
+    try {
+        if(event.Records !== undefined) {
+            // Event mapping Polling SQS 
+            resp = await eventMappingSQSInvocation(event);
+        }else if(event['detail-type'] !== undefined) {
+            // async invokation
+           resp = await asyncEventInvocation(event);
+        } else {
+            // sync invokation using API Gateways
+            resp = await syncApiGatwayInvocation(event);
+        }
+    
+        return {
+            statusCode: 200,
+            body: JSON.stringify({
+                response: resp,
+                message: `Success- Checkout Method invoked!`
+            })
+        }
+    } catch (error) {
+        console.error(error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                response: null,
+                message: `Something went wrong in checkout service!`
+            })
+        }
     }
+}
+
+async function eventMappingSQSInvocation(event: SQSEvent) {
+    const records: any[] = event.Records;
+    console.log(`SQS POLLING Records - ${JSON.stringify(records)}`);
+
 }
 
 async function asyncEventInvocation(event: any) {
@@ -28,7 +55,7 @@ async function asyncEventInvocation(event: any) {
 
 }
 
-async function syncApiGatwayInvocation(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+async function syncApiGatwayInvocation(event: APIGatewayProxyEvent){
     console.log(`Inside syncApiGatwayInvocation - ${event}`);
     let resp: any;
     switch(event.httpMethod) {
@@ -42,14 +69,7 @@ async function syncApiGatwayInvocation(event: APIGatewayProxyEvent): Promise<API
 
         default: break;
     }
-    return {
-        statusCode: 200,
-        body: JSON.stringify({
-            resonse: resp,
-            message: `Checkout process SUCCESS - ${event.httpMethod}`
-        }),
-        
-    }
+    return resp;
 }
 
 async function doCheckout(checkoutEvent: any) {
