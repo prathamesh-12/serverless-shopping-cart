@@ -46,6 +46,12 @@ async function eventMappingSQSInvocation(event: SQSEvent) {
     const records: any[] = event.Records;
     console.log(`SQS POLLING Records - ${JSON.stringify(records)}`);
 
+    records.map( async (record: any) => {
+        console.log(`Record - ${record}`);
+        const checkoutRecord = JSON.parse(record.body);
+
+        await doCheckout(checkoutRecord.detail);
+    })
 }
 
 async function asyncEventInvocation(event: any) {

@@ -48,6 +48,7 @@ export class ShoppingCartMicroservices extends Construct {
             ...nodeJSFunctionProps,
             entry: join(__dirname, '..', 'src', 'product', 'index.ts'),
             handler: 'handler',
+            functionName: 'ProductService',
             environment: {
                 DYNAMODB_PRODUCT_TABLE: productsTable.tableName,
                 PRIMARY_KEY: 'id'
@@ -68,6 +69,7 @@ export class ShoppingCartMicroservices extends Construct {
             ...nodeJSFunctionProps,
             entry: join(__dirname, '..', 'src', 'cart', 'index.ts'),
             handler: 'handler',
+            functionName: 'CartService',
             environment: {
                 DYNAMODB_CART_TABLE: cartsTable.tableName,
                 PRIMARY_KEY: 'userName',
@@ -90,6 +92,7 @@ export class ShoppingCartMicroservices extends Construct {
             ...nodeJSFunctionProps,
             entry: join(__dirname, '..', 'src', 'checkout', 'index.ts'),
             handler: 'handler',
+            functionName: 'CheckoutService',
             environment: {
                 DYNAMODB_CHECKOUT_TABLE: checkoutTable.tableName,
                 PRIMARY_KEY: 'userName',
